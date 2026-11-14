@@ -1,0 +1,18 @@
+# Credenciales del dispositivo (las genera Terraform)
+firmware/pluviometro_mqtt/aws_secrets.h
+*.pem
+*.key
+
+# Estado de Terraform: contiene la llave privada del certificado
+infra/terraform/.terraform/
+infra/terraform/terraform.tfstate*
+infra/terraform/terraform.tfvars
+infra/terraform/build/
+
+# Python y LaTeX
+__pycache__/
+*.aux
+*.log
+*.out
+infra/terraform/tfplan
+*.tfplan

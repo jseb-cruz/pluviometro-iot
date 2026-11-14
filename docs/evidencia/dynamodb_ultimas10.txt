@@ -1,0 +1,14 @@
+# Ultimas 10 lecturas en DynamoDB (tabla pluviometro-lecturas, device_id = pluviometro-esp32-01)
+
+seq | ts       | lluvia_mm | lluvia_cruda_mm | lluvia_pot_mm | tasa_mm_h | ratio | calidad    | drift_sim
+----+----------+-----------+-----------------+---------------+-----------+-------+------------+----------
+21  | 14:12:26 | 9.88      | 9.92            | 10.11         | 27.79     | 0.978 | OK         | False    
+22  | 14:12:29 | 10.34     | 10.33           | 10.4          | 27.42     | 0.995 | OK         | False    
+23  | 14:12:32 | 10.78     | 9.69            | 10.99         | 26.34     | 0.903 | SOSPECHOSA | True     
+24  | 14:12:35 | 11.19     | 10.09           | 10.89         | 24.49     | 0.91  | SOSPECHOSA | True     
+25  | 14:12:38 | 11.58     | 10.4            | 11.8          | 23.28     | 0.903 | SOSPECHOSA | True     
+26  | 14:12:41 | 11.96     | 10.71           | 11.62         | 23.13     | 0.892 | SOSPECHOSA | True     
+27  | 14:12:45 | 12.34     | 11.04           | 12.01         | 22.57     | 0.895 | SOSPECHOSA | True     
+28  | 14:12:48 | 12.7      | 11.36           | 12.61         | 21.74     | 0.899 | SOSPECHOSA | True     
+29  | 14:12:50 | 13.05     | 11.79           | 13.08         | 21.17     | 0.907 | SOSPECHOSA | True     
+30  | 14:12:54 | 13.39     | 12.03           | 13.21         | 20.25     | 0.908 | SOSPECHOSA | True     

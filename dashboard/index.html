@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluviometro IoT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --bg: #f5f6f4; --panel: #ffffff; --txt: #1d2421; --sub: #5d6a64; --line: #dfe3e0;
+    --celda: #1f6fb2; --pot: #d9822b; --cruda: #9aa5a0; --ok: #2e8b57; --warn: #c0392b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121614; --panel: #1b201e; --txt: #e8ece9; --sub: #9aa69f; --line: #2c3430;
+            --celda: #5aa6e6; --pot: #f0a35a; --cruda: #6d7873; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 16px 8px; max-width: 1200px; margin: auto; }
+  h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; color: var(--sub); font-size: 13px; }
+  main { max-width: 1200px; margin: auto; padding: 8px 16px 32px; display: grid; gap: 14px;
+         grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); }
+  .kpis { grid-column: 1 / -1; display: grid; gap: 14px;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .kpi .v { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kpi .l { color: var(--sub); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card h2 { margin: 0 0 8px; font-size: 14px; }
+  .card h2 small { color: var(--sub); font-weight: 400; }
+  canvas { width: 100% !important; height: 240px !important; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; color: #fff; font-size: 18px; }
+  .ok { background: var(--ok); } .bad { background: var(--warn); }
+  footer { text-align: center; color: var(--sub); font-size: 12px; padding-bottom: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pluviometro gravimetrico IoT</h1>
+  <p id="estado">Cargando...</p>
+</header>
+<main>
+  <section class="kpis">
+    <div class="card kpi"><div class="l">Lluvia acumulada</div><div class="v" id="k-acum">--</div></div>
+    <div class="card kpi"><div class="l">Tasa de lluvia</div><div class="v" id="k-tasa">--</div></div>
+    <div class="card kpi"><div class="l">Celda / potenciometro</div><div class="v" id="k-ratio">--</div></div>
+    <div class="card kpi"><div class="l">Calidad de la senal</div><div class="v" id="k-cal">--</div></div>
+  </section>
+  <div class="card"><h2>Lluvia acumulada <small>celda frente a potenciometro (mm)</small></h2><canvas id="c-acum"></canvas></div>
+  <div class="card"><h2>Senal cruda y filtrada <small>celda de carga (mm)</small></h2><canvas id="c-filtro"></canvas></div>
+  <div class="card"><h2>Tasa de lluvia <small>mm/h</small></h2><canvas id="c-tasa"></canvas></div>
+  <div class="card"><h2>Validacion cruzada y drift <small>cociente celda/potenciometro</small></h2><canvas id="c-ratio"></canvas></div>
+</main>
+<footer>ESP32 &rarr; AWS IoT Core &rarr; DynamoDB &rarr; Lambda + API Gateway &rarr; S3 + CloudFront</footer>
+
+<script>
+const CFG = window.PLUVIO_CONFIG || { apiUrl: "", deviceId: "demo", refrescoSegundos: 30 };
+const DEMO = new URLSearchParams(location.search).has("demo") || !CFG.apiUrl;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const hora = ms => new Date(ms).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+
+Chart.defaults.color = css("--sub");
+Chart.defaults.borderColor = css("--line");
+Chart.defaults.font.family = "system-ui, sans-serif";
+
+function grafica(id, series, extra = {}) {
+  return new Chart(document.getElementById(id), {
+    type: "line",
+    data: { labels: [], datasets: series.map(s => ({ label: s.label, data: [], borderColor: s.color,
+      backgroundColor: s.color, borderWidth: s.ancho || 2, pointRadius: 0, tension: .2,
+      borderDash: s.dash || [] })) },
+    options: { animation: false, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+      plugins: { legend: { labels: { boxWidth: 12 } } },
+      scales: { x: { ticks: { maxTicksLimit: 8 } }, y: extra.y || {} } }
+  });
+}
+
+const gAcum = grafica("c-acum", [{ label: "Celda de carga", color: css("--celda") },
+                                 { label: "Potenciometro", color: css("--pot"), dash: [5, 4] }]);
+const gFiltro = grafica("c-filtro", [{ label: "Cruda", color: css("--cruda"), ancho: 1 },
+                                     { label: "Filtrada y corregida", color: css("--celda") }]);
+const gTasa = grafica("c-tasa", [{ label: "Tasa (mm/h)", color: css("--celda") }], { y: { min: 0 } });
+const gRatio = grafica("c-ratio", [{ label: "Cociente", color: css("--pot") },
+                                   { label: "Limite +8 %", color: css("--warn"), ancho: 1, dash: [3, 3] },
+                                   { label: "Limite -8 %", color: css("--warn"), ancho: 1, dash: [3, 3] }],
+                                  { y: { min: 0.7, max: 1.3 } });
+
+function pintar(lecturas, origen) {
+  if (!lecturas.length) { document.getElementById("estado").textContent = "Sin lecturas en el periodo."; return; }
+  const t = lecturas.map(l => hora(l.ts));
+  const set = (g, arrs) => { g.data.labels = t; arrs.forEach((a, i) => g.data.datasets[i].data = a); g.update(); };
+
+  set(gAcum, [lecturas.map(l => l.lluvia_mm), lecturas.map(l => l.lluvia_pot_mm)]);
+  set(gFiltro, [lecturas.map(l => l.lluvia_cruda_mm), lecturas.map(l => l.lluvia_mm)]);
+  set(gTasa, [lecturas.map(l => l.tasa_mm_h)]);
+  set(gRatio, [lecturas.map(l => l.ratio ?? null), t.map(() => 1.08), t.map(() => 0.92)]);
+
+  const u = lecturas[lecturas.length - 1];
+  document.getElementById("k-acum").textContent = u.lluvia_mm.toFixed(1) + " mm";
+  document.getElementById("k-tasa").textContent = u.tasa_mm_h.toFixed(1) + " mm/h";
+  document.getElementById("k-ratio").textContent = u.ratio != null ? u.ratio.toFixed(2) : "--";
+  const ok = u.calidad === "OK";
+  document.getElementById("k-cal").innerHTML = `<span class="badge ${ok ? "ok" : "bad"}">${u.calidad}</span>`;
+  document.getElementById("estado").textContent =
+    `${origen} - dispositivo ${CFG.deviceId} - ${lecturas.length} lecturas - ultima ${new Date(u.ts).toLocaleString("es-CO")}`;
+}
+
+// Datos simulados para probar el dashboard sin hardware (?demo en la URL)
+function datosDemo() {
+  const ahora = Date.now(), n = 240, out = [];
+  let acum = 0, pot = 0;
+  for (let i = 0; i < n; i++) {
+    const tasa = Math.max(0, 6 * Math.exp(-(((i - 90) / 30) ** 2)) + 3 * Math.exp(-(((i - 180) / 15) ** 2)));
+    acum += tasa / 60; pot += tasa / 60 * (1 + (Math.random() - .5) * .04);
+    const drift = i > 200 ? 0.9 : 1;
+    const ratio = pot > 1 ? (acum * drift) / pot : null;
+    out.push({ ts: ahora - (n - i) * 60000, lluvia_mm: acum, lluvia_pot_mm: pot,
+      lluvia_cruda_mm: acum * drift + (Math.random() - .5) * .6, tasa_mm_h: tasa,
+      ratio, calidad: ratio != null && Math.abs(ratio - 1) > .08 ? "SOSPECHOSA" : "OK" });
+  }
+  return out;
+}
+
+let cache = [];   // lecturas ya descargadas: despues de la primera carga solo se piden las nuevas
+
+async function actualizar() {
+  if (DEMO) { pintar(datosDemo(), "Modo demostracion"); return; }
+  try {
+    let url = `${CFG.apiUrl}?device=${encodeURIComponent(CFG.deviceId)}&horas=24`;
+    if (cache.length) url += `&desde=${cache[cache.length - 1].ts}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const limite = Date.now() - 24 * 3600 * 1000;
+    cache = cache.concat(j.lecturas).filter(l => l.ts >= limite);
+    pintar(cache, "En vivo");
+  } catch (e) {
+    document.getElementById("estado").textContent = "No se pudo consultar la API (" + e.message + ").";
+  }
+}
+
+actualizar();
+if (!DEMO) setInterval(actualizar, (CFG.refrescoSegundos || 30) * 1000);
+</script>
+</body>
+</html>

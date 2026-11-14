@@ -1,0 +1,30 @@
+Área del embudo: 0.02011 m²  ->  1 mm = 20.11 g
+
+== 1) Constantes para el firmware ==
+  factor = 418.4406 cuentas/g
+  offset = -8653.1 cuentas
+  Ruido típico: 0.14 g (0.007 mm)
+  RMSE tras calibrar: 0.50 g (0.025 mm)
+
+== 2) Error sistemático (calibración provisional de 1 punto) ==
+  Bias medio: +0.66 g (+0.033 mm)
+  Regresión: medido = 1.00195 · real + -0.77 g
+     offset b = -0.77 g | error de ganancia = +0.195 %
+  RMSE antes:  1.49 g | después: 0.50 g
+
+    ref (g)    medido  corregido    error      mm
+        0.0       0.0        0.8    +0.77    0.00
+      100.0      99.7      100.3    +0.32    4.97
+      200.0     199.7      200.1    +0.10    9.95
+      400.0     399.7      399.7    -0.30   19.89
+      600.0     600.0      599.6    -0.40   29.84
+      800.0     800.3      799.5    -0.50   39.79
+     1000.0    1000.6      999.4    -0.57   49.74
+     1500.0    1501.9     1499.8    -0.22   74.60
+     2000.0    2003.9     2000.8    +0.80   99.47
+
+== 3) Potenciómetro (solo vale si calibraste con AGUA) ==
+  mm = 0.04150 · mV + -12.582   (R² = 0.9998)
+  RMSE: 0.420 mm
+
+Gráfica guardada en calibracion.png

@@ -1,0 +1,41 @@
+// Diagrama de arquitectura: dot -Tpng -Gdpi=200 arquitectura.dot -o arquitectura.png
+digraph arquitectura {
+  rankdir=LR;
+  graph [fontname="Helvetica", fontsize=11, nodesep=0.35, ranksep=0.45, pad=0.2, compound=true];
+  node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#4a5560", penwidth=1.1];
+  edge  [fontname="Helvetica", fontsize=8.5, color="#4a5560", arrowsize=0.7];
+
+  subgraph cluster_borde {
+    label="Borde (estacion meteorologica)"; style="rounded,dashed"; color="#8a949c"; fontcolor="#333333";
+    sensores [label="Celda de carga + HX711\nPotenciometro + flotador", fillcolor="#eef3f8"];
+    esp32    [label="ESP32\nmediana · EMA · calibracion\ncorreccion · validacion", fillcolor="#eef3f8"];
+    sensores -> esp32 [label="24 bits / ADC1"];
+  }
+
+  subgraph cluster_aws {
+    label="AWS Cloud · us-east-1 (desplegado con Terraform)"; style="rounded"; color="#d9822b"; fontcolor="#a35b12";
+    iot    [label="AWS IoT Core\nThing + certificado X.509\npolitica de minimo privilegio", fillcolor="#fff4e8"];
+    regla  [label="Regla IoT (SQL)\nSELECT *, topic(2), timestamp()", fillcolor="#fff4e8"];
+    ddb    [label="Amazon DynamoDB\nPK device_id · SK ts\nbajo demanda", fillcolor="#eaf1fb"];
+    lambda [label="AWS Lambda\nPython 3.12\nGET /lecturas", fillcolor="#fff4e8"];
+    apigw  [label="API Gateway\nHTTP API + CORS", fillcolor="#f3eefb"];
+    s3     [label="Amazon S3\nbucket privado\nindex.html + config.js", fillcolor="#edf7ee"];
+    cf     [label="Amazon CloudFront\nHTTPS + OAC", fillcolor="#f3eefb"];
+    cw     [label="CloudWatch Logs\nerrores y trazas", fillcolor="#f6f6f6"];
+
+    iot -> regla;
+    regla -> ddb [label="PutItem"];
+    regla -> cw  [style=dashed, label="error_action"];
+    lambda -> ddb [label="Query", dir=back];
+    apigw -> lambda [dir=back];
+    cf -> s3 [label="OAC", dir=back];
+    lambda -> cw [style=dashed];
+    {rank=same; regla; lambda;}
+  }
+
+  usuario [label="Usuario\n(navegador)", shape=ellipse, fillcolor="#f4f4f4"];
+
+  esp32 -> iot [label="MQTT/TLS 8883\nJSON cada 60 s", color="#a35b12", fontcolor="#a35b12", penwidth=1.4];
+  usuario -> cf [label="HTTPS"];
+  usuario -> apigw [label="fetch JSON", style=dashed];
+}

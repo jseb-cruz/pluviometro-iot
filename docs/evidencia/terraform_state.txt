@@ -1,0 +1,37 @@
+# terraform state list
+data.archive_file.lambda_api
+data.aws_caller_identity.current
+data.aws_iot_endpoint.ats
+data.http.amazon_root_ca1[0]
+aws_apigatewayv2_api.http
+aws_apigatewayv2_integration.lambda
+aws_apigatewayv2_route.get_lecturas
+aws_apigatewayv2_stage.default
+aws_cloudfront_distribution.dashboard[0]
+aws_cloudfront_origin_access_control.dashboard[0]
+aws_cloudwatch_log_group.iot_errores
+aws_cloudwatch_log_group.lambda_api
+aws_dynamodb_table.lecturas
+aws_iam_role.iot_rule[0]
+aws_iam_role.lambda[0]
+aws_iam_role_policy.iot_rule[0]
+aws_iam_role_policy.iot_rule_logs[0]
+aws_iam_role_policy.lambda_query[0]
+aws_iam_role_policy_attachment.lambda_logs[0]
+aws_iot_certificate.esp32
+aws_iot_policy.esp32
+aws_iot_policy_attachment.esp32
+aws_iot_thing.esp32
+aws_iot_thing_principal_attachment.esp32
+aws_iot_topic_rule.guardar_lecturas
+aws_lambda_function.api_lecturas
+aws_lambda_permission.apigw
+aws_s3_bucket.dashboard
+aws_s3_bucket_policy.dashboard[0]
+aws_s3_bucket_public_access_block.dashboard
+aws_s3_object.config
+aws_s3_object.index
+local_sensitive_file.aws_secrets_h[0]
+
+Total de recursos en el estado: 33
+(incluye data sources: 4; recursos administrados: 29)

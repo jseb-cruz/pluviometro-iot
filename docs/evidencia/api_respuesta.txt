@@ -1,0 +1,14 @@
+# GET https://elsnkxxeb3.execute-api.us-east-1.amazonaws.com/lecturas (resumen)
+
+HTTP 200
+device: pluviometro-esp32-01 | horas: 24.0 | n: 30
+seq: 1 -> 30
+lluvia_mm final: 13.39 | lluvia_pot_mm final: 13.21
+tasa_mm_h min/max: 20.25 / 33.29
+calidad: {'OK': 22, 'SOSPECHOSA': 8}
+drift_sim true en seq: [23, 24, 25, 26, 27, 28, 29, 30]
+ratio sin drift: 0.978 - 1.03 | ratio con drift: 0.892 - 0.91
+
+Primera y ultima lectura:
+{"tasa_mm_h": 20.74, "pot_mv": 307, "lluvia_mm": 0.35, "lluvia_pot_mm": 0.35, "drift_sim": false, "calidad": "OK", "masa_g": 6.9, "device_id": "pluviometro-esp32-01", "seq": 1, "lluvia_cruda_mm": 0.38, "ts": 1794683487180}
+{"tasa_mm_h": 20.25, "pot_mv": 564, "ratio": 0.908, "lluvia_mm": 13.39, "lluvia_pot_mm": 13.21, "drift_sim": true, "masa_g": 269.2, "calidad": "SOSPECHOSA", "device_id": "pluviometro-esp32-01", "seq": 30, "lluvia_cruda_mm": 12.03, "ts": 1794683574088}

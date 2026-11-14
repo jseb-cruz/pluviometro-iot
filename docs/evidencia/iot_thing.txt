@@ -1,0 +1,28 @@
+# aws iot describe-thing --thing-name pluviometro-esp32-01
+{
+    "defaultClientId": "pluviometro-esp32-01",
+    "thingName": "pluviometro-esp32-01",
+    "thingId": "46bf94de-3749-4e37-8a5c-bd6ecda3da0f",
+    "thingArn": "arn:aws:iot:us-east-1:XXXXXXXXXXXX:thing/pluviometro-esp32-01",
+    "attributes": {},
+    "version": 1
+}
+
+# aws iot list-thing-principals --thing-name pluviometro-esp32-01
+{
+    "principals": [
+        "arn:aws:iot:us-east-1:XXXXXXXXXXXX:cert/a2712eddaf10141347d02ae16c1cf82b42d84eaa44a80e6c9ec2b297a72b5d07"
+    ]
+}
+
+# aws iot describe-certificate (estado)
+{
+    "certificateId": "a2712eddaf10141347d02ae16c1cf82b42d84eaa44a80e6c9ec2b297a72b5d07",
+    "certificateArn": "arn:aws:iot:us-east-1:XXXXXXXXXXXX:cert/a2712eddaf10141347d02ae16c1cf82b42d84eaa44a80e6c9ec2b297a72b5d07",
+    "status": "ACTIVE",
+    "creationDate": "2026-11-14T14:00:14.164000-05:00",
+    "validity": {
+        "notBefore": "2026-11-14T13:58:14-05:00",
+        "notAfter": "2049-12-31T18:59:59-05:00"
+    }
+}

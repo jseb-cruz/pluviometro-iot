@@ -1,0 +1,9 @@
+# Copia este archivo como terraform.tfvars y ajusta si hace falta.
+aws_region        = "us-east-1"
+thing_name        = "pluviometro-esp32-01"
+
+# AWS Academy Learner Lab: true (usa LabRole). Cuenta propia: false (crea roles).
+use_lab_role      = true
+
+# Si CloudFront no esta habilitado en tu laboratorio, cambialo a false.
+enable_cloudfront = true

@@ -1,0 +1,7 @@
+# terraform output  (2026-11-14 14:17 -05)
+api_url = "https://elsnkxxeb3.execute-api.us-east-1.amazonaws.com/lecturas"
+certificate_id = "a2712eddaf10141347d02ae16c1cf82b42d84eaa44a80e6c9ec2b297a72b5d07"
+dashboard_url = "https://d2nb5zllocqacr.cloudfront.net"
+dynamodb_table = "pluviometro-lecturas"
+iot_endpoint = "ao0jmtgzs4irm-ats.iot.us-east-1.amazonaws.com"
+mqtt_topic = "pluviometro/pluviometro-esp32-01/telemetria"

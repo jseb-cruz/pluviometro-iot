@@ -1,0 +1,12 @@
+concepto,Prototipo,Demostracion,Demostracion optimizada,Red regional optimizada
+IoT Core (conectividad),0.0035,0.0035,0.0035,0.1728
+IoT Core (mensajes),0.0432,0.2592,0.2592,2.16
+IoT Core (regla + accion),0.013,0.0778,0.0778,0.648
+DynamoDB (escrituras),0.027,0.162,0.162,1.35
+DynamoDB (lecturas),0.6696,13.302,0.1287,0.5467
+DynamoDB (almacenamiento),0.0038,0.0227,0.0227,0.189
+Lambda,0.0726,0.2419,0.2419,3.6288
+API Gateway (HTTP API),0.0864,0.288,0.288,4.32
+S3 + CloudFront,0.0065,0.0217,0.0217,0.1082
+CloudWatch Logs,0.013,0.0432,0.0432,0.648
+TOTAL,0.94,14.42,1.25,13.77
