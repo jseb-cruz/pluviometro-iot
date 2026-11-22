@@ -1,0 +1,70 @@
+{
+  "filtros_rmse_g_con_lluvia": {
+    "raw": 4.33,
+    "med": 1.51,
+    "filt": 1.44
+  },
+  "filtros_error_max_g_con_lluvia": {
+    "raw": 104.4,
+    "med": 23.8,
+    "filt": 8.4
+  },
+  "ema_constante_tiempo_s": 0.57,
+  "calibracion": {
+    "offset": -8442.2079,
+    "factor": 419.3572,
+    "a": 1.0013,
+    "b": -0.6842,
+    "k_pot": 0.0497,
+    "c_pot": -14.5775,
+    "rmse_antes_g": 1.0395,
+    "rmse_despues_g": 0.5513,
+    "rmse_pot_mm": 0.1492
+  },
+  "reglas_validacion": {
+    "Solo relativa, desde 1 mm": {
+      "falsas_pct": 8.5,
+      "deteccion_min": 5.0
+    },
+    "Solo relativa, desde 3 mm": {
+      "falsas_pct": 4.6,
+      "deteccion_min": 5.0
+    },
+    "Solo relativa, desde 5 mm": {
+      "falsas_pct": 0.8,
+      "deteccion_min": 5.0
+    },
+    "Relativa + 0,5 mm, desde 1 mm": {
+      "falsas_pct": 3.1,
+      "deteccion_min": 5.0
+    },
+    "Relativa + 0,8 mm, desde 1 mm": {
+      "falsas_pct": 0.0,
+      "deteccion_min": 5.0
+    }
+  },
+  "falsas_alarmas_pct_antes_drift": 0.0,
+  "golpe_detectado": true,
+  "drift_inicio_h": 2.2,
+  "drift_detectado_tras_min": 5.0,
+  "drift_corregido_tras_min": 9.0,
+  "ganancia_estimada": 0.905,
+  "lluvia_real_final_mm": 32.65,
+  "lluvia_sin_correccion_final_mm": 29.42,
+  "lluvia_corregida_final_mm": 32.53,
+  "error_final_sin_correccion_pct": -9.9,
+  "error_final_corregido_pct": -0.4,
+  "publicaciones": 180,
+  "montecarlo": {
+    "tormentas": 30,
+    "falsas_alarmas_pct_media": 0.0,
+    "falsas_alarmas_pct_max": 0.0,
+    "drift_detectado_pct": 100.0,
+    "deteccion_min_media": 5.0,
+    "deteccion_min_max": 5.0,
+    "error_final_sin_correccion_pct_media": -9.89,
+    "error_final_corregido_pct_media": -0.41,
+    "error_final_corregido_pct_max_abs": 0.61,
+    "golpe_detectado_pct": 100.0
+  }
+}

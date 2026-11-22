@@ -20,7 +20,7 @@ const double CAL_FACTOR = 420.0;    // cuentas por gramo (valor provisional)
 // ---- Correccion del error sistematico (calibracion.py, seccion 2) ----
 const double REG_A = 1.0;           // ganancia: medido = a * real + b
 const double REG_B = 0.0;           // offset en gramos
-const bool   CORREGIR_DRIFT = true; // en la demo de drift: true = se compensa
+const bool   CORREGIR_DRIFT = true; // true = estima y compensa el drift con el potenciometro
 
 // ---- Potenciometro (calibracion.py, seccion 3): mm = K_POT * mV + C_POT ----
 const double K_POT = 0.05;
@@ -32,7 +32,9 @@ const double MASA_MAX_G = 2000;          // capacidad util del recipiente (~100 
 const double MASA_TOLERANCIA_G = 30;     // lluvia negativa tolerada antes de marcar
 const double SALTO_MAX_G = 200;          // ~10 mm en un intervalo: imposible
 const double TOL_RATIO = 0.08;           // +-8 %: debe ser menor que el drift a detectar (10 %)
+const double TOL_ABS_MM = 0.8;           // piso absoluto: resolucion del flotador (gemelo digital)
 const double MM_MIN_VALIDACION = 1.0;    // por debajo de 1 mm no se compara
+const int    N_DRIFT = 5;                // envios seguidos fuera de banda para estimar el drift
 
 // ---- Envio ----
 const unsigned long INTERVALO_ENVIO_MS = 60000;   // 1 mensaje por minuto (10000 para demos)

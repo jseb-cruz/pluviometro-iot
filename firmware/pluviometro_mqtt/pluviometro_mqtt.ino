@@ -6,7 +6,10 @@
 //   2. Media exponencial (EMA) -> suaviza el ruido
 //   3. Calibracion            -> masa = (raw - offset) / factor
 //   4. Correccion             -> x = (medido - b) / a  y compensacion de drift
-//   5. Validacion             -> rango fisico y cruce celda / potenciometro
+//   5. Validacion             -> rango fisico y cruce celda / potenciometro;
+//                                si el desacuerdo persiste, se estima el drift con el
+//                                potenciometro y se compensa (misma logica que
+//                                simulacion/gemelo_digital.py)
 //
 // Librerias: HX711 (Bogdan Necula), PubSubClient (Nick O'Leary), ArduinoJson (Benoit Blanchon, v7)
 // Archivos: config.h (WiFi y constantes) y aws_secrets.h (lo genera Terraform)
@@ -36,7 +39,11 @@ double mmAnteriorPub = 0;     // para la tasa de lluvia
 unsigned long msAnteriorPub = 0;
 unsigned long ultimoEnvio = 0;
 unsigned long secuencia = 0;
-bool simularDrift = false;    // se activa con el comando "d" por el monitor serie
+bool simularDrift = false;    // "d": multiplica la lectura por 0.90 (falla de ganancia)
+double gananciaEst = 1.0;     // ganancia de la celda estimada con el potenciometro
+double histRatio[N_DRIFT];    // ultimos cocientes validos
+bool   histFuera[N_DRIFT];    // y si estaban fuera de banda
+int    nHist = 0;
 long offsetActual = CAL_OFFSET; // se puede rehacer la tara con el comando "t"
 
 // ---------------- Paso 1: mediana de 5 ----------------
@@ -55,6 +62,22 @@ double leerPotMv() {
   long suma = 0;
   for (int i = 0; i < 16; i++) suma += analogReadMilliVolts(PIN_POT);
   return suma / 16.0;
+}
+
+// Validacion cruzada: tolerancia relativa con un piso absoluto (resolucion del flotador)
+bool fueraDeBanda(double mmCelda, double mmPot) {
+  return fabs(mmCelda - mmPot) > max(TOL_RATIO * mmPot, TOL_ABS_MM);
+}
+
+double medianaHist() {
+  double a[N_DRIFT];
+  for (int i = 0; i < N_DRIFT; i++) a[i] = histRatio[i];
+  for (int i = 1; i < N_DRIFT; i++) {
+    double x = a[i]; int j = i - 1;
+    while (j >= 0 && a[j] > x) { a[j + 1] = a[j]; j--; }
+    a[j + 1] = x;
+  }
+  return a[N_DRIFT / 2];
 }
 
 // ---------------- Conectividad ----------------
@@ -149,13 +172,6 @@ void loop() {
 
   // 4. Correccion del error sistematico (regresion medido = a * real + b)
   double masaReg = (masaFilt - REG_B) / REG_A;
-  double mmSinCompensar = masaReg / G_POR_MM;   // para validar: antes de compensar el drift
-
-  // Compensacion del drift
-  double masaCorr = masaReg;
-  if (simularDrift && CORREGIR_DRIFT) masaCorr /= 0.90;
-
-  double mmCelda = masaCorr / G_POR_MM;
   double mmCruda = masaCruda / G_POR_MM;
 
   // Potenciometro: mm = K_POT * mV + C_POT (tambien sale de calibracion.py)
@@ -164,17 +180,33 @@ void loop() {
 
   // 5. Validacion
   String calidad = "OK";
-  if (masaCorr < -MASA_TOLERANCIA_G || masaCorr > MASA_MAX_G ||
-      fabs(masaCorr - masaAnterior) > SALTO_MAX_G) {
-    calidad = "FUERA_RANGO";           // vaciado, golpe o falla
+  if (masaReg < -MASA_TOLERANCIA_G || masaReg > MASA_MAX_G ||
+      fabs(masaReg - masaAnterior) > SALTO_MAX_G) {
+    calidad = "FUERA_RANGO";           // golpe, vaciado o falla
+    masaReg = masaAnterior;            // se publica el ultimo valor valido
   }
+  double mmSinCompensar = masaReg / G_POR_MM;   // el cociente se mide ANTES de compensar
   double ratio = NAN;
-  if (mmPot > MM_MIN_VALIDACION) {
-    // Se compara la lectura SIN compensar: si se usa la compensada, el drift nunca se detecta.
+  if (calidad == "OK" && mmPot > MM_MIN_VALIDACION) {
     ratio = mmSinCompensar / mmPot;
-    if (calidad == "OK" && fabs(ratio - 1.0) > TOL_RATIO) calidad = "SOSPECHOSA";
+    bool fuera = fueraDeBanda(mmSinCompensar, mmPot);
+    for (int i = N_DRIFT - 1; i > 0; i--) { histRatio[i] = histRatio[i - 1]; histFuera[i] = histFuera[i - 1]; }
+    histRatio[0] = ratio; histFuera[0] = fuera;
+    if (nHist < N_DRIFT) nHist++;
+    if (nHist == N_DRIFT) {
+      bool todos = true, ninguno = true;
+      for (int i = 0; i < N_DRIFT; i++) { todos &= histFuera[i]; ninguno &= !histFuera[i]; }
+      if (todos && CORREGIR_DRIFT) gananciaEst = medianaHist();   // drift persistente: se estima
+      else if (ninguno) gananciaEst = 1.0;                        // la celda volvio a la normalidad
+    }
+    if (fuera) {
+      bool corregida = gananciaEst != 1.0 && !fueraDeBanda(mmSinCompensar / gananciaEst, mmPot);
+      calidad = corregida ? "CORREGIDA" : "SOSPECHOSA";
+    }
   }
-  masaAnterior = masaCorr;
+  masaAnterior = masaReg;
+  double masaCorr = masaReg / gananciaEst;
+  double mmCelda = masaCorr / G_POR_MM;
 
   // Tasa de lluvia en mm/h entre dos envios
   unsigned long ahoraMs = millis();
@@ -199,6 +231,7 @@ void loop() {
   doc["tasa_mm_h"] = round(tasa * 100) / 100.0;
   if (!isnan(ratio)) doc["ratio"] = round(ratio * 1000) / 1000.0;
   doc["calidad"] = calidad;
+  doc["ganancia_est"] = round(gananciaEst * 1000) / 1000.0;
   doc["drift_sim"] = simularDrift;
 
   char buf[512];
