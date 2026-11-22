@@ -38,7 +38,7 @@ No agregar atribución de Claude en los commits.
 - Presentación de Adquisición: pendiente.
 
 ## Pendiente
-- [ ] `terraform apply` para publicar el dashboard actualizado (CORREGIDA en ámbar)
-- [ ] `python simulacion/gemelo_digital.py --publicar` y capturas del dashboard con esos datos
+- [x] `terraform apply` para publicar el dashboard actualizado (CORREGIDA en ámbar)
+- [x] `python simulacion/gemelo_digital.py --publicar` y capturas del dashboard con esos datos
 - [ ] Presentación de Adquisición y procesamiento de datos
 - [ ] Opcional: demo del firmware en Wokwi publicando a AWS (`simulacion/wokwi/DEMO_MQTT.md`)
