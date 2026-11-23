@@ -193,7 +193,7 @@ def procesar(mundo, cal, fw=FIRMWARE, mm_min=None, tol_abs=None):
 
     paso = int(fw["INTERVALO_S"] * fs)
     pubs, hist = [], []                                    # (cociente, fuera de banda)
-    ganancia_est, masa_ant, mm_ant, seq = 1.0, 0.0, None, 0
+    ganancia_est, masa_ant, seq = 1.0, 0.0, 0
     for k in range(paso - 1, len(raw), paso):
         masa_filt = a_g(filt[k])
         masa_reg = (masa_filt - cal["b"]) / cal["a"]       # paso 4: regresion
@@ -220,12 +220,14 @@ def procesar(mundo, cal, fw=FIRMWARE, mm_min=None, tol_abs=None):
         if calidad == "FUERA_RANGO":
             masa_reg = masa_ant                            # se retiene el ultimo valor valido
             mm_sin = masa_reg / fw["G_POR_MM"]
+        masa_reg_ant = masa_ant                            # antes de compensar, para la tasa
         masa_ant = masa_reg
         masa_corr = masa_reg / ganancia_est
         mm = masa_corr / fw["G_POR_MM"]
         t_s = mundo["t"][k]
-        tasa = 0.0 if mm_ant is None else max(0.0, (mm - mm_ant) / (fw["INTERVALO_S"] / 3600))
-        mm_ant = mm
+        # Misma ganancia en los dos envios: activar la compensacion no aparece como lluvia
+        horas = fw["INTERVALO_S"] / 3600
+        tasa = 0.0 if seq == 0 else max(0.0, (masa_reg - masa_reg_ant) / ganancia_est / fw["G_POR_MM"] / horas)
         seq += 1
         pubs.append({
             "seq": seq, "t_h": round(t_s / 3600, 4), "raw": int(mundo["raw"][k]),

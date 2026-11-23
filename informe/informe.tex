@@ -182,7 +182,7 @@ Mediana + EMA & 1,44 & 8,4\\
 \end{figure}
 
 \subsection{Detección y corrección de la deriva}
-La Fig.~\ref{fig:val} muestra la tormenta completa. El golpe de 90~s se marcó \texttt{FUERA\_RANGO} y no alteró la lluvia publicada. Al iniciar la falla de ganancia, la lectura sin compensar se separa del potenciómetro; a los 5~min, cuando la pérdida de ganancia supera el 8~\%, las lecturas pasan a \texttt{SOSPECHOSA}, y a los 9~min la ganancia estimada (0,905 frente a 0,90 real) ya se compensa y las lecturas quedan \texttt{CORREGIDA}. Al final de la tormenta la lluvia sin compensar tenía un error de $-9{,}9$~\% y la corregida de $-0{,}4$~\%.
+La Fig.~\ref{fig:val} muestra la tormenta completa. El golpe de 90~s se marcó \texttt{FUERA\_RANGO} y no alteró la lluvia publicada. Al iniciar la falla de ganancia, la lectura sin compensar se separa del potenciómetro; a los 5~min, cuando la pérdida de ganancia supera el 8~\%, las lecturas pasan a \texttt{SOSPECHOSA}, y a los 9~min la ganancia estimada (0,905 frente a 0,90 real) ya se compensa y las lecturas quedan \texttt{CORREGIDA}. La tasa de lluvia se calcula con la misma ganancia en los dos envíos, para que la activación de la compensación no se interprete como lluvia. Al final de la tormenta la lluvia sin compensar tenía un error de $-9{,}9$~\% y la corregida de $-0{,}4$~\%.
 
 \begin{figure*}[t]
 \centering
@@ -258,7 +258,7 @@ y se elimina con \texttt{terraform destroy} al terminar cada sesión del laborat
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.82\textwidth]{../docs/evidencia/dashboard_informe.png}
+\includegraphics[width=0.78\textwidth]{../docs/evidencia/dashboard_informe.png}
 \caption{Tablero en CloudFront con las 30 lecturas de la prueba. En el panel de validación cruzada, el cociente sale de la banda $\pm8$~\% al activarse la deriva simulada, mientras la lluvia filtrada y corregida continúa sin caída.}
 \label{fig:dash}
 \end{figure*}
@@ -312,9 +312,9 @@ Salida & Valor\\
 \end{tabularx}
 \end{table}
 
-La prueba de punta a punta, previa al gemelo digital, reprodujo la ruta completa del dato: se publicaron 30 mensajes MQTT con el formato del firmware en el tópico \texttt{pluviometro/pluviometro-esp32-01/telemetria} (\texttt{aws iot-data publish}); la regla IoT añadió \texttt{device\_id} y \texttt{ts} y los guardó en DynamoDB; la Lambda los entregó por API Gateway (\texttt{GET /lecturas}, HTTP 200, $n=30$), y el tablero servido por CloudFront los graficó (Fig.~\ref{fig:dash}). Se simuló una lluvia fuerte de 13,4~mm con intensidad entre 20 y 33~mm/h. En los mensajes 23 a 30 se activó la deriva simulada: la lectura cruda cayó al 90~\%, el cociente sin compensar quedó entre 0,89 y 0,91, por debajo del límite de 0,92, y las lecturas se marcaron \texttt{SOSPECHOSA}, mientras la lluvia corregida siguió la curva real sin caída (Tabla~\ref{tab:lect}). Antes de la deriva el cociente estuvo entre 0,98 y 1,03 y todas las lecturas fueron \texttt{OK}.
+La prueba de punta a punta, previa al gemelo digital, reprodujo la ruta completa del dato: se publicaron 30 mensajes MQTT con el formato del firmware en el tópico \texttt{pluviometro/\allowbreak pluviometro-esp32-01/\allowbreak telemetria} (\texttt{aws iot-data publish}); la regla IoT añadió \texttt{device\_id} y \texttt{ts} y los guardó en DynamoDB; la Lambda los entregó por API Gateway (\texttt{GET /lecturas}, HTTP 200, $n=30$), y el tablero servido por CloudFront los graficó (Fig.~\ref{fig:dash}). Se simuló una lluvia fuerte de 13,4~mm con intensidad entre 20 y 33~mm/h. En los mensajes 23 a 30 se activó la deriva simulada: la lectura cruda cayó al 90~\%, el cociente sin compensar quedó entre 0,89 y 0,91, por debajo del límite de 0,92, y las lecturas se marcaron \texttt{SOSPECHOSA}, mientras la lluvia corregida siguió la curva real sin caída (Tabla~\ref{tab:lect}). Antes de la deriva el cociente estuvo entre 0,98 y 1,03 y todas las lecturas fueron \texttt{OK}.
 
-Fue una prueba acelerada: cada mensaje representa 1~minuto de lluvia simulada, pero se publicaron cada 2~s, por lo que el eje de tiempo del tablero abarca 1~minuto real. El gemelo digital también puede publicar sus 180 lecturas en el mismo tópico (\texttt{--publicar}), con el formato del firmware. Las capturas de la consola de DynamoDB e IoT Core se incluyen en el Anexo~A. El 22 de noviembre de 2026 se publicaron en AWS IoT Core las 180 lecturas del gemelo digital: la API las devolvió completas y en orden, con sus banderas de calidad (135 \texttt{OK}, 1 \texttt{FUERA\_RANGO}, 4 \texttt{SOSPECHOSA} y 40 \texttt{CORREGIDA}). El tablero graficó las 180 y mostró la bandera de la última, \texttt{CORREGIDA}; la captura está en \texttt{docs/\allowbreak evidencia/\allowbreak dashboard\_gemelo.png}.
+Fue una prueba acelerada: cada mensaje representa 1~minuto de lluvia simulada, pero se publicaron cada 2~s, por lo que el eje de tiempo del tablero abarca 1~minuto real. Las capturas de la consola de DynamoDB e IoT Core se incluyen en el Anexo~A. El 22 de noviembre de 2026 se publicaron en AWS IoT Core, en el mismo tópico, las 180 lecturas del gemelo digital (\texttt{-{}-publicar}): la API las devolvió completas y en orden, con sus banderas de calidad (135 \texttt{OK}, 1 \texttt{FUERA\_RANGO}, 4 \texttt{SOSPECHOSA} y 40 \texttt{CORREGIDA}). El tablero graficó las 180 y mostró la bandera de la última, \texttt{CORREGIDA}; la captura está en \texttt{docs/\allowbreak evidencia/\allowbreak dashboard\_gemelo.png}.
 
 \begin{table}[t]
 \caption{Lecturas almacenadas en DynamoDB}

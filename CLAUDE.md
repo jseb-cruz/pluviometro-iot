@@ -17,6 +17,9 @@ Entrega final: **26 de noviembre de 2026**. Responde siempre en español.
 5. Validación: FUERA_RANGO publica el último valor válido; desacuerdo si
    |mm_celda − mm_pot| > max(0,08·mm_pot, 0,8 mm) con más de 1 mm; si persiste 5 envíos se estima
    la ganancia (mediana de los cocientes) y se compensa. Calidades: OK, SOSPECHOSA, CORREGIDA, FUERA_RANGO.
+6. Tasa: max(0, (masaReg − masaRegAnterior) / gananciaEst / G_POR_MM / horas), con la masa sin compensar
+   y la misma ganancia en los dos envíos, para que activar la compensación no aparezca como lluvia
+   (seq 141 del gemelo: 24,53 mm/h en vez de 165,07).
 
 Resultados del gemelo (no inventar otros): RMSE 4,33 → 1,44 g; error máx. 104 → 8,4 g;
 0 % falsas alarmas y 100 % de detección en 30 tormentas; detección a los 5 min;

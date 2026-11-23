@@ -34,8 +34,7 @@ bool ventanaLlena = false;
 
 double emaRaw = 0;            // paso 2
 bool   emaIniciada = false;
-double masaAnterior = 0;      // para detectar saltos imposibles
-double mmAnteriorPub = 0;     // para la tasa de lluvia
+double masaAnterior = 0;      // masa de regresion (sin compensar) del envio anterior: saltos y tasa
 unsigned long msAnteriorPub = 0;
 unsigned long ultimoEnvio = 0;
 unsigned long secuencia = 0;
@@ -204,18 +203,19 @@ void loop() {
       calidad = corregida ? "CORREGIDA" : "SOSPECHOSA";
     }
   }
+  double masaRegAnterior = masaAnterior;   // antes de compensar, para la tasa
   masaAnterior = masaReg;
   double masaCorr = masaReg / gananciaEst;
   double mmCelda = masaCorr / G_POR_MM;
 
-  // Tasa de lluvia en mm/h entre dos envios
+  // Tasa de lluvia en mm/h entre dos envios. Se usa la misma ganancia en los dos puntos para que
+  // la activacion de la compensacion no aparezca como lluvia.
   unsigned long ahoraMs = millis();
   double tasa = 0;
   if (msAnteriorPub > 0) {
     double horas = (ahoraMs - msAnteriorPub) / 3600000.0;
-    tasa = max(0.0, (mmCelda - mmAnteriorPub) / horas);
+    tasa = max(0.0, (masaReg - masaRegAnterior) / gananciaEst / G_POR_MM / horas);
   }
-  mmAnteriorPub = mmCelda;
   msAnteriorPub = ahoraMs;
 
   // Mensaje JSON (cada clave se vuelve una columna en DynamoDB)
