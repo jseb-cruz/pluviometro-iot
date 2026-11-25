@@ -39,7 +39,8 @@ No agregar atribución de Claude en los commits.
 - Informe IEEE: `informe/informe.tex` → compilar con `pdflatex` dos veces desde `informe/`.
 - Presentación de Cloud: está como artefacto en claude.ai (no en este repositorio).
 - Presentación de Adquisición: pendiente.
-- Video de la demo: `video/demo_pluviometro.mp4` (no va a Git; `video/` está en .gitignore).
+- Video de la demo: `video/demo_pluviometro.mp4` (sin voz) y `video/demo_pluviometro_voz.mp4` (narrado con Piper,
+  es_MX-claude-high). No van a Git (`/video/` en .gitignore); scripts y guion en `simulacion/video/`.
 - Wokwi (público, sketch de calibración sin credenciales): https://wokwi.com/projects/481702637981326337
 
 ## Pendiente

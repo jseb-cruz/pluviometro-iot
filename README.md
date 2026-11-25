@@ -110,6 +110,26 @@ Proyecto público (sketch de prueba y calibración, sin credenciales):
 <https://wokwi.com/projects/481702637981326337>. Play, luego `t` (tara) y `s` (modo continuo) en el
 monitor serie; al cambiar la carga de la celda o mover el potenciómetro cambian `neto` y `pot_mv`.
 
+## Video de la demostración
+
+Los scripts están en `simulacion/video/` (el video y las grabaciones van en `video/`, que no se versiona):
+
+| Script | Qué hace |
+|---|---|
+| `rec.py` | Graba la salida de un comando en un pty con marcas de tiempo |
+| `grab_wokwi.py` | Graba el proyecto de Wokwi con Playwright (capturas periódicas) |
+| `grab_live.py` | Graba el dashboard mientras el gemelo publica en AWS |
+| `narracion.json` | Guion: subtítulo en pantalla y texto hablado de cada tramo |
+| `narrar.py` | Sintetiza cada frase con Piper (`es_MX-claude-high`, `length_scale` 0,85) |
+| `componer.py` | Compone el video 1920x1080 a 30 fps; con `--voz` alarga cada tramo para que quepa su frase |
+| `mezclar.py` | Coloca las frases, normaliza a −16 LUFS y codifica AAC 192 kbps |
+
+```bash
+python simulacion/video/narrar.py voces/es_MX-claude-high.onnx video/voz
+python simulacion/video/componer.py video/grabaciones video/mudo.mp4 --voz video/voz
+python simulacion/video/mezclar.py video/mudo.mp4 video/voz video/demo_pluviometro_voz.mp4
+```
+
 ## Tablero sin hardware
 
 Abrir `dashboard/index.html?demo` en el navegador: muestra datos simulados, incluida una prueba de drift.

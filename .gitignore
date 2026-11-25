@@ -18,4 +18,4 @@ infra/terraform/tfplan
 *.tfplan
 
 # Video de la demo (no se versiona)
-video/
+/video/
