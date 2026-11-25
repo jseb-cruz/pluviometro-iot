@@ -30,7 +30,7 @@ y la publica por MQTT/TLS en AWS IoT Core. La infraestructura en la nube se desp
 | `simulacion/gemelo_digital.py` | Gemelo digital: señal cruda con ruido, gotas, viento, deriva y falla de ganancia; mismo tratamiento del firmware, métricas y figuras |
 | `simulacion/resultados/` | Métricas (`metricas.json`), lecturas (`publicaciones.jsonl`) y figuras del gemelo |
 | `simulacion/prueba_firmware/` | Compila el firmware en el PC con stubs y lo compara con el gemelo |
-| `simulacion/wokwi/` | Proyecto de simulación del circuito en Wokwi |
+| `simulacion/wokwi/` | Proyecto de simulación del circuito en Wokwi ([proyecto público](https://wokwi.com/projects/481702637981326337)) |
 | `costos/` | Estimación reproducible de costos mensuales (`estimacion_costos.py`) |
 | `docs/` | Diagrama de arquitectura (fuente Graphviz, PNG y PDF) |
 
@@ -88,6 +88,7 @@ Precios de lista us-east-1 sin capa gratuita, consultados el 14 de noviembre de 
 cd simulacion
 python gemelo_digital.py                 # simula 3 h de tormenta + 30 tormentas Monte Carlo
 python gemelo_digital.py --publicar      # además envía las 180 lecturas a AWS IoT Core
+python gemelo_digital.py --publicar --intervalo 1 --montecarlo 0   # demo en vivo (1 msg/s)
 python prueba_firmware/verificar_firmware.py   # firmware (g++) vs gemelo: 180/180 iguales
 ```
 
@@ -99,6 +100,17 @@ python prueba_firmware/verificar_firmware.py   # firmware (g++) vs gemelo: 180/1
 | Drift del 10 % detectado | 100 %, a los 5 min |
 | Error final de lluvia: sin compensar → corregida | −9,9 % → −0,4 % |
 
+`--publicar` usa boto3 (cliente `iot-data`) si está instalado y si no la AWS CLI; imprime por línea
+la hora, `seq`, `lluvia_mm` y calidad, y guarda `resultados/registro_publicacion.jsonl` con la marca
+de tiempo de cada envío (sirve para sincronizar grabaciones). `--max-mensajes N` publica solo N.
+
+## Montaje virtual en Wokwi
+
+Proyecto público (sketch de prueba y calibración, sin credenciales):
+<https://wokwi.com/projects/481702637981326337>. Play, luego `t` (tara) y `s` (modo continuo) en el
+monitor serie; al cambiar la carga de la celda o mover el potenciómetro cambian `neto` y `pot_mv`.
+
 ## Tablero sin hardware
 
 Abrir `dashboard/index.html?demo` en el navegador: muestra datos simulados, incluida una prueba de drift.
+Con `?refresco=N` se cambia el periodo de consulta a la API (segundos, mínimo 2; por defecto 30).

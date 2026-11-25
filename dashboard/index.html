@@ -141,8 +141,12 @@ async function actualizar() {
   }
 }
 
+// ?refresco=N en la URL cambia el periodo de consulta (segundos, minimo 2)
+const refrescoUrl = parseFloat(new URLSearchParams(location.search).get("refresco"));
+const REFRESCO_S = Number.isFinite(refrescoUrl) ? Math.max(2, refrescoUrl) : (CFG.refrescoSegundos || 30);
+
 actualizar();
-if (!DEMO) setInterval(actualizar, (CFG.refrescoSegundos || 30) * 1000);
+if (!DEMO) setInterval(actualizar, REFRESCO_S * 1000);
 </script>
 </body>
 </html>

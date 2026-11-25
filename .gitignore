@@ -16,3 +16,6 @@ __pycache__/
 *.out
 infra/terraform/tfplan
 *.tfplan
+
+# Video de la demo (no se versiona)
+video/

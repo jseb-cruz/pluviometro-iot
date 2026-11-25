@@ -39,6 +39,8 @@ No agregar atribución de Claude en los commits.
 - Informe IEEE: `informe/informe.tex` → compilar con `pdflatex` dos veces desde `informe/`.
 - Presentación de Cloud: está como artefacto en claude.ai (no en este repositorio).
 - Presentación de Adquisición: pendiente.
+- Video de la demo: `video/demo_pluviometro.mp4` (no va a Git; `video/` está en .gitignore).
+- Wokwi (público, sketch de calibración sin credenciales): https://wokwi.com/projects/481702637981326337
 
 ## Pendiente
 - [x] `terraform apply` para publicar el dashboard actualizado (CORREGIDA en ámbar)

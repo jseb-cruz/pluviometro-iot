@@ -21,7 +21,9 @@ Fuentes de error modeladas (todas configurables en MODELO):
 Uso:
   python gemelo_digital.py                  # simula, mide y genera figuras en ./resultados
   python gemelo_digital.py --publicar       # ademas publica las lecturas a AWS IoT Core
-        [--endpoint X] [--topico Y] [--intervalo 2]   (usa la AWS CLI ya configurada)
+        [--endpoint X] [--topico Y] [--intervalo 2] [--max-mensajes N]
+        (usa boto3 si esta instalado; si no, la AWS CLI ya configurada; guarda
+        registro_publicacion.jsonl con la hora de cada envio)
 
 Requiere: numpy, matplotlib
 """
@@ -377,16 +379,40 @@ CAMPOS_FIRMWARE = ("seq", "raw", "masa_g", "lluvia_cruda_mm", "lluvia_mm", "pot_
                    "lluvia_pot_mm", "tasa_mm_h", "ratio", "calidad", "drift_sim")
 
 
-def publicar(pubs, endpoint, topico, intervalo):
-    for p in pubs:
-        msg = {k: p[k] for k in CAMPOS_FIRMWARE if p[k] is not None}
-        msg["epoch_s"] = int(time.time())
-        msg["fuente"] = "gemelo_digital"
-        subprocess.run(["aws", "iot-data", "publish", "--endpoint-url", f"https://{endpoint}",
-                        "--topic", topico, "--cli-binary-format", "raw-in-base64-out",
-                        "--payload", json.dumps(msg)], check=True)
-        print(f"publicado seq {p['seq']:3d}  {p['lluvia_mm']:6.2f} mm  {p['calidad']}")
-        time.sleep(intervalo)
+def _cliente_publicacion(endpoint):
+    """boto3 (cliente iot-data) si esta instalado; si no, la AWS CLI."""
+    try:
+        import boto3
+        cliente = boto3.client("iot-data", endpoint_url=f"https://{endpoint}")
+        return "boto3", lambda topico, cuerpo: cliente.publish(topic=topico, qos=1, payload=cuerpo)
+    except ImportError:
+        def con_cli(topico, cuerpo):
+            subprocess.run(["aws", "iot-data", "publish", "--endpoint-url", f"https://{endpoint}",
+                            "--topic", topico, "--cli-binary-format", "raw-in-base64-out",
+                            "--payload", cuerpo], check=True, stdout=subprocess.DEVNULL)
+        return "aws-cli", con_cli
+
+
+def publicar(pubs, endpoint, topico, intervalo, registro, maximo=None):
+    """Publica las lecturas y guarda un registro JSONL con la hora de cada envio
+    (sirve para sincronizar la grabacion del dashboard con los eventos)."""
+    metodo, enviar = _cliente_publicacion(endpoint)
+    print(f"Publicando en {topico} con {metodo} cada {intervalo:g} s", flush=True)
+    with open(registro, "w", encoding="utf-8") as reg:
+        for p in pubs[:maximo]:
+            msg = {k: p[k] for k in CAMPOS_FIRMWARE if p[k] is not None}
+            msg["epoch_s"] = int(time.time())
+            msg["fuente"] = "gemelo_digital"
+            enviar(topico, json.dumps(msg))
+            t = time.time()
+            hora = time.strftime("%H:%M:%S", time.localtime(t))
+            print(f"{hora}  seq {p['seq']:3d}  {p['lluvia_mm']:6.2f} mm  {p['calidad']}", flush=True)
+            reg.write(json.dumps({"t_unix": round(t, 3), "hora": hora, "seq": p["seq"],
+                                  "lluvia_mm": p["lluvia_mm"], "calidad": p["calidad"],
+                                  "topico": topico}) + "\n")
+            reg.flush()
+            time.sleep(intervalo)
+    print(f"Registro de publicacion en {registro}", flush=True)
 
 
 def montecarlo(n):
@@ -424,6 +450,9 @@ def main():
     ap.add_argument("--endpoint", default=None, help="endpoint ATS (terraform output iot_endpoint)")
     ap.add_argument("--topico", default="pluviometro/pluviometro-esp32-01/telemetria")
     ap.add_argument("--intervalo", type=float, default=2.0, help="segundos entre mensajes al publicar")
+    ap.add_argument("--registro", default=None,
+                    help="JSONL con la hora de cada envio (por defecto <salida>/registro_publicacion.jsonl)")
+    ap.add_argument("--max-mensajes", type=int, default=None, help="publica solo los primeros n mensajes")
     ap.add_argument("--montecarlo", type=int, default=30, help="tormentas para la prueba de robustez (0 = omitir)")
     args = ap.parse_args()
     os.makedirs(args.salida, exist_ok=True)
@@ -442,14 +471,15 @@ def main():
         for p in pubs:
             f.write(json.dumps(p, ensure_ascii=False) + "\n")
     print(json.dumps(met, indent=2, ensure_ascii=False))
-    print(f"\nResultados en {args.salida}")
+    print(f"\nResultados en {args.salida}", flush=True)
 
     if args.publicar:
         if not args.endpoint:
             args.endpoint = subprocess.run(["aws", "iot", "describe-endpoint", "--endpoint-type", "iot:Data-ATS",
                                             "--query", "endpointAddress", "--output", "text"],
                                            capture_output=True, text=True, check=True).stdout.strip()
-        publicar(pubs, args.endpoint, args.topico, args.intervalo)
+        registro = args.registro or os.path.join(args.salida, "registro_publicacion.jsonl")
+        publicar(pubs, args.endpoint, args.topico, args.intervalo, registro, args.max_mensajes)
 
 
 if __name__ == "__main__":
