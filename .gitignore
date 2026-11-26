@@ -17,5 +17,8 @@ __pycache__/
 infra/terraform/tfplan
 *.tfplan
 
-# Video de la demo (no se versiona)
+# Material de apoyo local (no se versiona)
 /video/
+/simulacion/video/
+/simulacion/resultados/registro_publicacion.jsonl
+CLAUDE.md
