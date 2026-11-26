@@ -351,12 +351,15 @@ def figuras(mundo, cal, pubs, senales, met, carpeta):
     fa = met["reglas_validacion"]
     ks = list(fa.keys())
     v = [fa[k]["falsas_pct"] for k in ks]
-    fig, ax = plt.subplots(figsize=(3.6, 2.8))
-    etiquetas = ["Rel.\n>1 mm", "Rel.\n>3 mm", "Rel.\n>5 mm", "Rel.\n+0,5 mm", "Rel.\n+0,8 mm"]
+    fig, ax = plt.subplots(figsize=(4.2, 3.0))
+    # Las tres primeras solo usan la tolerancia relativa (8 %) a partir de una lluvia minima;
+    # las dos ultimas agregan un piso ABSOLUTO en mm: desacuerdo si |dif| > max(8 % ; piso)
+    etiquetas = ["Solo 8 %\ndesde\n1 mm", "Solo 8 %\ndesde\n3 mm", "Solo 8 %\ndesde\n5 mm",
+                 "8 % o\npiso abs.\n0,5 mm", "8 % o\npiso abs.\n0,8 mm"]
     ax.bar(etiquetas, v, color=[C["raw"]] * 4 + [C["filt"]])
     for i, x in enumerate(v):
-        ax.text(i, x + 0.3, f"{x:g} %", ha="center", fontsize=8)
-    ax.set(ylabel="Falsas alarmas (%)", title="Falsas alarmas sin falla, por regla")
+        ax.text(i, x + 0.3, f"{x:g} %".replace(".", ","), ha="center", fontsize=8)
+    ax.set(ylabel="Falsas alarmas (%)", xlabel="Regla de validación", title="Falsas alarmas sin falla, por regla")
     ax.tick_params(axis="x", labelsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(carpeta, "fig_umbral.png"), dpi=200); plt.close(fig)
 
